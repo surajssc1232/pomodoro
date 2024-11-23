@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock with Pomodoro and Ripple Effect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: 'Space Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #clock-container {
+            position: relative;
+            border: 2px solid white;
+            padding: 20px;
+            font-size: 3rem;
+            text-align: center;
+        }
+        #clock {
+            margin-bottom: 20px;
+        }
+        .ripple {
+            position: absolute;
+            border: 2px solid white;
+            border-radius: 50%;
+            animation: ripple 1s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        #pomodoro-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        #pomodoro-timer {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        #pomodoro-controls button {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+        }
+        #youtube-player {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="clock-container">
+        <div id="clock"></div>
+        <div id="pomodoro-container">
+            <div id="pomodoro-timer">25:00</div>
+            <div id="pomodoro-controls">
+                <button id="start-pomodoro">Start</button>
+                <button id="pause-pomodoro">Pause</button>
+                <button id="reset-pomodoro">Reset</button>
+            </div>
+        </div>
+    </div>
+    <div id="youtube-player"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player;
+        let pomodoroInterval;
+        let pomodoroTime = 25 * 60; // 25 minutes
+        let isPomodoroRunning = false;
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('clock').textContent = time;
+        }
+
+        function createRipple() {
+            const container = document.getElementById('clock-container');
+            const ripple = document.createElement('div');
+            ripple.classList.add('ripple');
+            
+            const size = Math.max(container.clientWidth, container.clientHeight);
+            ripple.style.width = ripple.style.height = `${size}px`;
+            
+            ripple.style.left = `${container.clientWidth / 2 - size / 2}px`;
+            ripple.style.top = `${container.clientHeight / 2 - size / 2}px`;
+            
+            container.appendChild(ripple);
+            
+            ripple.addEventListener('animationend', () => {
+                ripple.remove();
+            });
+        }
+
+        function updatePomodoroTimer() {
+            const minutes = Math.floor(pomodoroTime / 60);
+            const seconds = pomodoroTime % 60;
+            document.getElementById('pomodoro-timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startPomodoro() {
+            if (!isPomodoroRunning) {
+                isPomodoroRunning = true;
+                pomodoroInterval = setInterval(() => {
+                    if (pomodoroTime > 0) {
+                        pomodoroTime--;
+                        updatePomodoroTimer();
+                    } else {
+                        clearInterval(pomodoroInterval);
+                        isPomodoroRunning = false;
+                        alert('Pomodoro session completed!');
+                        player.playVideo();
+                    }
+                }, 1000);
+                player.pauseVideo();
+            }
+        }
+
+        function pausePomodoro() {
+            if (isPomodoroRunning) {
+                clearInterval(pomodoroInterval);
+                isPomodoroRunning = false;
+            }
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            isPomodoroRunning = false;
+            pomodoroTime = 25 * 60;
+            updatePomodoroTimer();
+            player.pauseVideo();
+        }
+
+        document.getElementById('start-pomodoro').addEventListener('click', startPomodoro);
+        document.getElementById('pause-pomodoro').addEventListener('click', pausePomodoro);
+        document.getElementById('reset-pomodoro').addEventListener('click', resetPomodoro);
+
+        setInterval(() => {
+            updateClock();
+            createRipple();
+        }, 1000);
+
+        updateClock(); // Initial call to display the time immediately
+
+        // YouTube Player API
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0',
+                width: '0',
+                videoId: 'jfKfPfyJRdk', // Lo-fi hip hop radio - beats to relax/study to
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'loop': 1,
+                    'playlist': 'jfKfPfyJRdk'
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            // Player is ready
+        }
+    </script>
+</body>
+</html>
+
